@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# STOMP Client
+
+A feature-rich STOMP (Simple Text Oriented Messaging Protocol) client application built with Next.js and Material-UI, supporting both string and Protocol Buffers message formats.
+
+## Features
+
+- Real-time communication using STOMP over WebSocket
+- Support for string and Protocol Buffers message formats
+- Multiple destination subscription
+- Publish messages to specific destinations
+- Message history with sent and received messages
+- Dark mode support
+- Responsive design with collapsible sidebar
+
+## Technologies Used
+
+- Next.js
+- React
+- Material-UI
+- @stomp/stompjs for STOMP communication
+- protobufjs for Protocol Buffers support
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js (version 14 or later)
+- npm or yarn
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-username/stomp-client.git
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+2. Navigate to the project directory:
+   ```
+   cd stomp-client
+   ```
 
-## Learn More
+3. Install dependencies:
+   ```
+   npm install
+   ```
+   or if you're using yarn:
+   ```
+   yarn install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+### Running the Application
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Start the development server:
+   ```
+   npm run dev
+   ```
+   or with yarn:
+   ```
+   yarn dev
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+2. Open your browser and visit `http://localhost:3000`
 
-## Deploy on Vercel
+## Usage
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Enter the STOMP server URL in the "Server URL" field (e.g., ws://localhost:8080/ws).
+2. Click "Connect" to establish a STOMP connection.
+3. Choose between "String" or "Protobuf" message format.
+4. If using Protobuf, upload your .proto file.
+5. Enter a destination in the "Subscribe Destination" field and click "Add" to subscribe.
+6. To send a message:
+    - Enter the destination in the "Publish Destination" field.
+    - Type your message in the "Message" field.
+    - Click "Send Message" to publish.
+7. View sent and received messages in the Message History table.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## STOMP Specifics
+
+- This client uses STOMP 1.2 protocol.
+- It supports connection headers for authentication if required by your STOMP server.
+- The client can handle server-side heartbeats to maintain the connection.

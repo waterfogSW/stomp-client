@@ -3,12 +3,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Client, IMessage } from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
-import { ThemeProvider } from 'styled-components';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { lightTheme, darkTheme } from '../styles/theme';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import IconButton from '@mui/material/IconButton';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
 
-type ProtoMessage = protobuf.Message<{[k: string]: any}> & {
+type ProtoMessage = protobuf.Message<{ [k: string]: any }> & {
   $type: protobuf.Type;
   toJSON(): { [k: string]: any };
 };
@@ -32,13 +46,13 @@ const WebSocketClient: React.FC = () => {
   const [messageInput, setMessageInput] = useState<string>('');
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const clientRef = useRef<Client | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(scrollToBottom, [messages]);
+  const theme = createTheme({
+    palette: {
+      mode: isDarkMode ? 'dark' : 'light',
+    },
+  });
 
   const connectToServer = async () => {
     if (clientRef.current) {
@@ -163,141 +177,130 @@ const WebSocketClient: React.FC = () => {
     }
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
-    <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
-      <div className="flex h-screen bg-gray-100">
-        <div className="flex-1 flex flex-col p-4">
-          <h1 className="text-3xl font-bold mb-6 text-gray-800">WebSocket Protobuf Client</h1>
-
-          <Button variant="secondary" onClick={() => setIsDarkMode(!isDarkMode)}>
-            Toggle Theme
-          </Button>
-
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white p-4 rounded shadow">
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">Server Connection</h2>
-              <Input
-                type="text"
-                value={serverUrl}
-                onChange={(e) => setServerUrl(e.target.value)}
-                placeholder="Enter WebSocket server URL"
-              />
-              <div className="flex space-x-2">
-                <Button
-                  variant="primary"
-                  onClick={connectToServer}
-                  disabled={connected || !serverUrl}
-                >
-                  Connect
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={disconnectFromServer}
-                  disabled={!connected}
-                >
-                  Disconnect
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded shadow">
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">Upload Proto File</h2>
-              <Input
-                type="file"
-                onChange={handleProtoFileUpload}
-                accept=".proto"
-              />
-              {protoFile && <p className="text-gray-600">Uploaded: {protoFile.name}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white p-4 rounded shadow">
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">Publish Channel</h2>
-              <Input
-                type="text"
-                value={publishChannel}
-                onChange={(e) => setPublishChannel(e.target.value)}
-                placeholder="Enter publish channel"
-              />
-            </div>
-
-            <div className="bg-white p-4 rounded shadow">
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">Subscribe Channels</h2>
-              <div className="flex mb-2">
-                <Input
-                  type="text"
-                  value={newSubscribeChannel}
-                  onChange={(e) => setNewSubscribeChannel(e.target.value)}
-                  placeholder="Enter subscribe channel"
-                />
-                <Button
-                  variant="primary"
-                  onClick={addSubscribeChannel}
-                >
-                  Add
-                </Button>
-              </div>
-              <ul className="list-disc pl-5">
-                {subscribeChannels.map((channel, index) => (
-                  <li key={index} className="flex justify-between items-center mb-2 text-gray-700">
-                    {channel}
-                    <Button
-                      variant="secondary"
-                      onClick={() => removeSubscribeChannel(channel)}
-                    >
-                      Remove
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <div style={{ display: 'flex', height: '100vh' }}>
+          <Paper
+              elevation={3}
+              style={{
+                width: isSidebarOpen ? '33%' : '60px',
+                transition: 'width 0.3s',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '20px',
+              }}
+          >
+            <IconButton onClick={toggleSidebar} style={{ alignSelf: 'flex-end' }}>
+              {isSidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            </IconButton>
+            {isSidebarOpen && (
+                <>
+                  <h1>WebSocket Client</h1>
+                  <Button variant="contained" onClick={() => setIsDarkMode(!isDarkMode)} style={{ marginBottom: '20px' }}>
+                    Toggle Theme
+                  </Button>
+                  <TextField
+                      label="Server URL"
+                      value={serverUrl}
+                      onChange={(e) => setServerUrl(e.target.value)}
+                      margin="normal"
+                      fullWidth
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <Button variant="contained" onClick={connectToServer} disabled={connected || !serverUrl}>
+                      Connect
                     </Button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex-1 flex">
-            <div className="flex-1 bg-white p-4 rounded shadow mr-4">
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">Send Message</h2>
-              <div className="relative mb-2 flex-1">
-                <textarea
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder="Enter JSON message"
-                  className="w-full h-48 p-2 border rounded font-mono text-gray-800 bg-gray-50"
-                  style={{paddingLeft: '3em'}}
-                />
-                <div className="absolute top-0 left-0 p-2 text-gray-400 select-none pointer-events-none font-mono">
-                  {messageInput.split('\n').map((_, i) => (
-                    <div key={i}>{i + 1}</div>
-                  ))}
-                </div>
-              </div>
-              <Button
-                variant="primary"
-                onClick={sendMessage}
-                disabled={!connected || !messageType}
-              >
-                Send Message
-              </Button>
-            </div>
-
-            <div className="flex-1 bg-white p-4 rounded shadow">
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">Message History</h2>
-              <div className="border rounded p-2 h-64 overflow-y-auto bg-gray-50">
-                {messages.map((msg, index) => (
-                  <div key={index} className={`mb-2 p-2 rounded ${msg.type === 'sent' ? 'bg-blue-100' : 'bg-green-100'}`}>
-                    <div className="text-xs text-gray-500 mb-1">
-                      {msg.type === 'sent' ? 'Sent' : 'Received'} at {msg.timestamp.toLocaleTimeString()}
-                    </div>
-                    <pre className="font-mono text-sm text-gray-800 whitespace-pre-wrap">{msg.content}</pre>
+                    <Button variant="contained" onClick={disconnectFromServer} disabled={!connected}>
+                      Disconnect
+                    </Button>
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-          </div>
+                  <TextField
+                      type="file"
+                      onChange={handleProtoFileUpload}
+                      inputProps={{ accept: '.proto' }}
+                      margin="normal"
+                      fullWidth
+                  />
+                  {protoFile && <p>Uploaded: {protoFile.name}</p>}
+                  <TextField
+                      label="Publish Channel"
+                      value={publishChannel}
+                      onChange={(e) => setPublishChannel(e.target.value)}
+                      margin="normal"
+                      fullWidth
+                  />
+                  <div style={{ display: 'flex', marginBottom: '20px' }}>
+                    <TextField
+                        label="Subscribe Channel"
+                        value={newSubscribeChannel}
+                        onChange={(e) => setNewSubscribeChannel(e.target.value)}
+                        margin="normal"
+                        fullWidth
+                    />
+                    <Button variant="contained" onClick={addSubscribeChannel} style={{ marginLeft: '10px' }}>
+                      Add
+                    </Button>
+                  </div>
+                  <List>
+                    {subscribeChannels.map((channel, index) => (
+                        <ListItem key={index}>
+                          <ListItemText primary={channel} />
+                          <ListItemSecondaryAction>
+                            <IconButton edge="end" aria-label="delete" onClick={() => removeSubscribeChannel(channel)}>
+                              {/* You can add a delete icon here */}
+                            </IconButton>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                    ))}
+                  </List>
+                  <TextField
+                      label="Message"
+                      multiline
+                      rows={4}
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      margin="normal"
+                      fullWidth
+                  />
+                  <Button variant="contained" onClick={sendMessage} disabled={!connected || !messageType} fullWidth>
+                    Send Message
+                  </Button>
+                </>
+            )}
+          </Paper>
+          <main style={{ flexGrow: 1, padding: '20px', overflow: 'hidden' }}>
+            <h2>Message History</h2>
+            <TableContainer component={Paper} style={{ maxHeight: 'calc(100vh - 100px)', overflow: 'auto' }}>
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Timestamp</TableCell>
+                    <TableCell>Content</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {messages.map((msg, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{msg.type}</TableCell>
+                        <TableCell>{msg.timestamp.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{msg.content}</pre>
+                        </TableCell>
+                      </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </main>
         </div>
-      </div>
-    </ThemeProvider>
+      </ThemeProvider>
   );
 };
 

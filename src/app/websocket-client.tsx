@@ -21,14 +21,22 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 
 type ProtoMessage = protobuf.Message<{ [k: string]: any }> & {
   $type: protobuf.Type;
   toJSON(): { [k: string]: any };
 };
 
-interface MessageItem {
-  type: 'sent' | 'received';
+interface MessageItem {  type: 'sent' | 'received';
   content: string;
   timestamp: Date;
 }
@@ -47,10 +55,14 @@ const WebSocketClient: React.FC = () => {
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const clientRef = useRef<Client | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [communicationType, setCommunicationType] = useState<'protobuf' | 'string'>('string');
 
   const theme = createTheme({
     palette: {
       mode: isDarkMode ? 'dark' : 'light',
+    },
+    shape: {
+      borderRadius: 12,
     },
   });
 
@@ -68,7 +80,7 @@ const WebSocketClient: React.FC = () => {
 
         subscribeChannels.forEach(channel => {
           client.subscribe(channel, (message: IMessage) => {
-            handleIncomingMessage(message.binaryBody as Uint8Array);
+            handleIncomingMessage(message.body);
           });
         });
       },
@@ -129,7 +141,7 @@ const WebSocketClient: React.FC = () => {
 
       if (connected && clientRef.current) {
         clientRef.current.subscribe(newSubscribeChannel, (message: IMessage) => {
-          handleIncomingMessage(message.binaryBody as Uint8Array);
+          handleIncomingMessage(message.body);
         });
       }
     }
@@ -140,19 +152,25 @@ const WebSocketClient: React.FC = () => {
   };
 
   const sendMessage = () => {
-    if (!connected || !messageType || !clientRef.current) return;
+    if (!connected || !clientRef.current) return;
 
     try {
-      const jsonMessage = JSON.parse(messageInput);
-      const errMsg = messageType.verify(jsonMessage);
-      if (errMsg) throw Error(errMsg);
+      let messageToSend: string = messageInput;
 
-      const message = messageType.create(jsonMessage) as ProtoMessage;
-      const encodedMessage = messageType.encode(message).finish();
+      if (communicationType === 'protobuf' && messageType) {
+        const jsonMessage = JSON.parse(messageInput);
+        const errMsg = messageType.verify(jsonMessage);
+        if (errMsg) throw Error(errMsg);
+
+        const message = messageType.create(jsonMessage) as ProtoMessage;
+        const encodedMessage = messageType.encode(message).finish();
+        // Convert Uint8Array to base64 string
+        messageToSend = btoa(String.fromCharCode.apply(null, encodedMessage as unknown as number[]));
+      }
 
       clientRef.current.publish({
         destination: publishChannel,
-        binaryBody: encodedMessage,
+        body: messageToSend,
       });
 
       setMessages(prev => [...prev, { type: 'sent', content: messageInput, timestamp: new Date() }]);
@@ -163,18 +181,25 @@ const WebSocketClient: React.FC = () => {
     }
   };
 
-  const handleIncomingMessage = (binaryBody: Uint8Array) => {
-    if (!messageType) return;
+  const handleIncomingMessage = (messageBody: string) => {
+    let messageContent: string;
 
-    try {
-      const decodedMessage = messageType.decode(binaryBody) as ProtoMessage;
-      const jsonMessage = messageType.toObject(decodedMessage);
-      const messageContent = JSON.stringify(jsonMessage, null, 2);
-      setMessages(prev => [...prev, { type: 'received', content: messageContent, timestamp: new Date() }]);
-    } catch (error) {
-      console.error('Error decoding message:', error);
-      setMessages(prev => [...prev, { type: 'received', content: `Error decoding message: ${error}`, timestamp: new Date() }]);
+    if (communicationType === 'protobuf' && messageType) {
+      try {
+        // Convert base64 string back to Uint8Array
+        const binaryMessage = new Uint8Array(atob(messageBody).split('').map(char => char.charCodeAt(0)));
+        const decodedMessage = messageType.decode(binaryMessage) as ProtoMessage;
+        const jsonMessage = messageType.toObject(decodedMessage);
+        messageContent = JSON.stringify(jsonMessage, null, 2);
+      } catch (error) {
+        console.error('Error decoding protobuf message:', error);
+        messageContent = `Error decoding message: ${error}`;
+      }
+    } else {
+      messageContent = messageBody;
     }
+
+    setMessages(prev => [...prev, { type: 'received', content: messageContent, timestamp: new Date() }]);
   };
 
   const toggleSidebar = () => {
@@ -184,99 +209,120 @@ const WebSocketClient: React.FC = () => {
   return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <div style={{ display: 'flex', height: '100vh' }}>
+        <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
           <Paper
               elevation={3}
-              style={{
+              sx={{
                 width: isSidebarOpen ? '33%' : '60px',
                 transition: 'width 0.3s',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '20px',
+                borderRadius: 0,
               }}
           >
-            <IconButton onClick={toggleSidebar} style={{ alignSelf: 'flex-end' }}>
-              {isSidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </IconButton>
-            {isSidebarOpen && (
-                <>
-                  <h1>WebSocket Client</h1>
-                  <Button variant="contained" onClick={() => setIsDarkMode(!isDarkMode)} style={{ marginBottom: '20px' }}>
-                    Toggle Theme
-                  </Button>
-                  <TextField
-                      label="Server URL"
-                      value={serverUrl}
-                      onChange={(e) => setServerUrl(e.target.value)}
-                      margin="normal"
-                      fullWidth
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <Button variant="contained" onClick={connectToServer} disabled={connected || !serverUrl}>
-                      Connect
-                    </Button>
-                    <Button variant="contained" onClick={disconnectFromServer} disabled={!connected}>
-                      Disconnect
-                    </Button>
-                  </div>
-                  <TextField
-                      type="file"
-                      onChange={handleProtoFileUpload}
-                      inputProps={{ accept: '.proto' }}
-                      margin="normal"
-                      fullWidth
-                  />
-                  {protoFile && <p>Uploaded: {protoFile.name}</p>}
-                  <TextField
-                      label="Publish Channel"
-                      value={publishChannel}
-                      onChange={(e) => setPublishChannel(e.target.value)}
-                      margin="normal"
-                      fullWidth
-                  />
-                  <div style={{ display: 'flex', marginBottom: '20px' }}>
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              p: isSidebarOpen ? 2 : 1
+            }}>
+              <IconButton
+                  onClick={toggleSidebar}
+                  sx={{ alignSelf: isSidebarOpen ? 'flex-end' : 'center', mb: 2 }}
+              >
+                {isSidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+              </IconButton>
+              {isSidebarOpen && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto', flexGrow: 1 }}>
+                    <h1>WebSocket Client</h1>
                     <TextField
-                        label="Subscribe Channel"
-                        value={newSubscribeChannel}
-                        onChange={(e) => setNewSubscribeChannel(e.target.value)}
-                        margin="normal"
+                        label="Server URL"
+                        value={serverUrl}
+                        onChange={(e) => setServerUrl(e.target.value)}
                         fullWidth
                     />
-                    <Button variant="contained" onClick={addSubscribeChannel} style={{ marginLeft: '10px' }}>
-                      Add
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Button variant="contained" onClick={connectToServer} disabled={connected || !serverUrl}>
+                        Connect
+                      </Button>
+                      <Button variant="contained" onClick={disconnectFromServer} disabled={!connected}>
+                        Disconnect
+                      </Button>
+                    </Box>
+                    <FormControl fullWidth>
+                      <InputLabel>Communication Type</InputLabel>
+                      <Select
+                          value={communicationType}
+                          onChange={(e) => setCommunicationType(e.target.value as 'protobuf' | 'string')}
+                      >
+                        <MenuItem value="string">String</MenuItem>
+                        <MenuItem value="protobuf">Protobuf</MenuItem>
+                      </Select>
+                    </FormControl>
+                    {communicationType === 'protobuf' && (
+                        <TextField
+                            type="file"
+                            onChange={handleProtoFileUpload}
+                            inputProps={{ accept: '.proto' }}
+                            fullWidth
+                        />
+                    )}
+                    {protoFile && <Chip label={`Uploaded: ${protoFile.name}`} onDelete={() => setProtoFile(null)} />}
+                    <TextField
+                        label="Publish Channel"
+                        value={publishChannel}
+                        onChange={(e) => setPublishChannel(e.target.value)}
+                        fullWidth
+                    />
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <TextField
+                          label="Subscribe Channel"
+                          value={newSubscribeChannel}
+                          onChange={(e) => setNewSubscribeChannel(e.target.value)}
+                          fullWidth
+                      />
+                      <Button variant="contained" onClick={addSubscribeChannel}>
+                        Add
+                      </Button>
+                    </Box>
+                    <List>
+                      {subscribeChannels.map((channel, index) => (
+                          <ListItem key={index}>
+                            <ListItemText primary={channel} />
+                            <ListItemSecondaryAction>
+                              <IconButton edge="end" aria-label="delete" onClick={() => removeSubscribeChannel(channel)}>
+                                <DeleteIcon />
+                              </IconButton>
+                            </ListItemSecondaryAction>
+                          </ListItem>
+                      ))}
+                    </List>
+                    <TextField
+                        label="Message"
+                        multiline
+                        rows={4}
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        fullWidth
+                    />
+                    <Button variant="contained" onClick={sendMessage} disabled={!connected} fullWidth>
+                      Send Message
                     </Button>
-                  </div>
-                  <List>
-                    {subscribeChannels.map((channel, index) => (
-                        <ListItem key={index}>
-                          <ListItemText primary={channel} />
-                          <ListItemSecondaryAction>
-                            <IconButton edge="end" aria-label="delete" onClick={() => removeSubscribeChannel(channel)}>
-                              {/* You can add a delete icon here */}
-                            </IconButton>
-                          </ListItemSecondaryAction>
-                        </ListItem>
-                    ))}
-                  </List>
-                  <TextField
-                      label="Message"
-                      multiline
-                      rows={4}
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      margin="normal"
-                      fullWidth
-                  />
-                  <Button variant="contained" onClick={sendMessage} disabled={!connected || !messageType} fullWidth>
-                    Send Message
-                  </Button>
-                </>
-            )}
+                  </Box>
+              )}
+              <IconButton
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  color="inherit"
+                  sx={{ mt: 'auto', alignSelf: isSidebarOpen ? 'flex-start' : 'center' }}
+              >
+                {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+              </IconButton>
+            </Box>
           </Paper>
-          <main style={{ flexGrow: 1, padding: '20px', overflow: 'hidden' }}>
+          <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, overflow: 'hidden' }}>
             <h2>Message History</h2>
-            <TableContainer component={Paper} style={{ maxHeight: 'calc(100vh - 100px)', overflow: 'auto' }}>
+            <TableContainer component={Paper} sx={{ flexGrow: 1, overflow: 'auto', mb: 2 }}>
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
@@ -298,8 +344,8 @@ const WebSocketClient: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </main>
-        </div>
+          </Box>
+        </Box>
       </ThemeProvider>
   );
 };

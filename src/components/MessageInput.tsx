@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -30,6 +30,25 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [messageInput, setMessageInput] = useState<string>('');
   const [publishChannel, setPublishChannel] = useState<string>('/app/sendMessage');
   const [error, setError] = useState<string | null>(null);
+  const [protoTypes, setProtoTypes] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (protoRoot) {
+      const types: string[] = [];
+      const collectTypes = (obj: protobuf.NamespaceBase) => {
+        Object.entries(obj.nested || {}).forEach(([name, value]) => {
+          if (value instanceof protobuf.Type) {
+            types.push(name);
+          }
+          if (value instanceof protobuf.Namespace) {
+            collectTypes(value);
+          }
+        });
+      };
+      collectTypes(protoRoot);
+      setProtoTypes(types);
+    }
+  }, [protoRoot]);
 
   const sendMessage = () => {
     if (!connected || !clientRef.current) return;
@@ -39,20 +58,23 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       if (communicationType === 'protobuf' && protoRoot) {
         const jsonMessage = JSON.parse(messageInput);
-        const messageTypeName = Object.keys(jsonMessage)[0];
+        const messageType = Object.keys(jsonMessage)[0];
 
-        const messageType = protoRoot.lookupType(messageTypeName);
+        const matchedType = protoTypes.find(type => type.toLowerCase() === messageType.toLowerCase());
 
-        if (messageType) {
-          const verificationError = messageType.verify(jsonMessage[messageTypeName]);
-          if (verificationError) {
-            throw new Error(`Invalid message: ${verificationError}`);
-          }
-          const message = messageType.create(jsonMessage[messageTypeName]);
-          messageBody = messageType.encode(message).finish();
-        } else {
-          throw new Error(`Message type '${messageTypeName}' not found in proto definition`);
+        if (!matchedType) {
+          throw new Error(`Unknown message type: ${messageType}`);
         }
+
+        const ProtoMessage = protoRoot.lookupType(matchedType);
+        const verificationError = ProtoMessage.verify(jsonMessage[messageType]);
+
+        if (verificationError) {
+          throw new Error(`Invalid message: ${verificationError}`);
+        }
+
+        const message = ProtoMessage.create(jsonMessage[messageType]);
+        messageBody = ProtoMessage.encode(message).finish();
       }
 
       clientRef.current.publish({
@@ -88,7 +110,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onChange={(e) => setMessageInput(e.target.value)}
             fullWidth
             error={!!error}
-            helperText={error}
+            helperText={error || "Enter JSON message with the message type as the root key"}
         />
         <Button
             variant="contained"

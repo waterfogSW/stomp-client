@@ -1,13 +1,12 @@
 'use client';
 
-import React, {useRef, useState} from 'react';
-import {Client} from '@stomp/stompjs';
-import {createTheme, ThemeProvider} from '@mui/material/styles';
+import React, { useState, useRef } from 'react';
+import { Client } from '@stomp/stompjs';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
-import {Sidebar} from './Sidebar';
-import {MessageHistory} from './MessageHistory';
-import * as protobuf from 'protobufjs';
+import { Sidebar } from './Sidebar';
+import { MessageHistory } from './MessageHistory';
 
 export interface MessageItem {
   type: 'sent' | 'received';
@@ -23,7 +22,6 @@ export const WebSocketClient: React.FC = () => {
   const clientRef = useRef<Client | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [communicationType, setCommunicationType] = useState<'protobuf' | 'string'>('string');
-  const [messageType, setMessageType] = useState<protobuf.Type | null>(null);
 
   const theme = createTheme({
     palette: {
@@ -36,8 +34,8 @@ export const WebSocketClient: React.FC = () => {
 
   return (
       <ThemeProvider theme={theme}>
-        <CssBaseline/>
-        <Box sx={{display: 'flex', height: '100vh', overflow: 'hidden'}}>
+        <CssBaseline />
+        <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
           <Sidebar
               isDarkMode={isDarkMode}
               setIsDarkMode={setIsDarkMode}
@@ -50,11 +48,9 @@ export const WebSocketClient: React.FC = () => {
               clientRef={clientRef}
               communicationType={communicationType}
               setCommunicationType={setCommunicationType}
-              messageType={messageType}
-              setMessageType={setMessageType}
               setMessages={setMessages}
           />
-          <MessageHistory messages={messages}/>
+          <MessageHistory messages={messages} />
         </Box>
       </ThemeProvider>
   );

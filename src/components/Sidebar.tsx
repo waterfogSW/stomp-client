@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -6,12 +6,12 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
-import {ConnectionPanel} from './ConnectionPanel';
-import {SubscriptionPanel} from './SubscriptionPanel';
-import {MessageInput} from './MessageInput';
-import {Client} from '@stomp/stompjs';
+import { ConnectionPanel } from './ConnectionPanel';
+import { SubscriptionPanel } from './SubscriptionPanel';
+import { MessageInput } from './MessageInput';
+import { Client } from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
-import {MessageItem} from './WebSocketClient';
+import { MessageItem } from './WebSocketClient';
 
 interface SidebarProps {
   isDarkMode: boolean;
@@ -25,8 +25,6 @@ interface SidebarProps {
   clientRef: React.MutableRefObject<Client | null>;
   communicationType: 'protobuf' | 'string';
   setCommunicationType: React.Dispatch<React.SetStateAction<'protobuf' | 'string'>>;
-  messageType: protobuf.Type | null;
-  setMessageType: React.Dispatch<React.SetStateAction<protobuf.Type | null>>;
   setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>;
 }
 
@@ -42,10 +40,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                   clientRef,
                                                   communicationType,
                                                   setCommunicationType,
-                                                  messageType,
-                                                  setMessageType,
                                                   setMessages
                                                 }) => {
+  const [protoRoot, setProtoRoot] = useState<protobuf.Root | null>(null);
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
@@ -68,9 +65,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }}>
           <IconButton
               onClick={toggleSidebar}
-              sx={{alignSelf: isSidebarOpen ? 'flex-end' : 'center', mb: 2}}
+              sx={{ alignSelf: isSidebarOpen ? 'flex-end' : 'center', mb: 2 }}
           >
-            {isSidebarOpen ? <ChevronLeftIcon/> : <ChevronRightIcon/>}
+            {isSidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </IconButton>
           {isSidebarOpen && (
               <Box sx={{
@@ -89,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     clientRef={clientRef}
                     communicationType={communicationType}
                     setCommunicationType={setCommunicationType}
-                    setMessageType={setMessageType}
+                    setProtoRoot={setProtoRoot}
                 />
                 <SubscriptionPanel
                     connected={connected}
@@ -100,17 +97,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     connected={connected}
                     clientRef={clientRef}
                     communicationType={communicationType}
-                    messageType={messageType}
                     setMessages={setMessages}
+                    protoRoot={protoRoot}
                 />
               </Box>
           )}
           <IconButton
               onClick={() => setIsDarkMode(!isDarkMode)}
               color="inherit"
-              sx={{mt: 'auto', alignSelf: isSidebarOpen ? 'flex-start' : 'center'}}
+              sx={{ mt: 'auto', alignSelf: isSidebarOpen ? 'flex-start' : 'center' }}
           >
-            {isDarkMode ? <Brightness7Icon/> : <Brightness4Icon/>}
+            {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
         </Box>
       </Paper>

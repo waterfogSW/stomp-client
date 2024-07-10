@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -7,7 +7,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
-import {Client} from '@stomp/stompjs';
+import { Client } from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
 
 interface ConnectionPanelProps {
@@ -18,7 +18,7 @@ interface ConnectionPanelProps {
   clientRef: React.MutableRefObject<Client | null>;
   communicationType: 'protobuf' | 'string';
   setCommunicationType: React.Dispatch<React.SetStateAction<'protobuf' | 'string'>>;
-  setMessageType: React.Dispatch<React.SetStateAction<protobuf.Type | null>>;
+  setProtoRoot: React.Dispatch<React.SetStateAction<protobuf.Root | null>>;
 }
 
 export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
@@ -29,7 +29,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                   clientRef,
                                                                   communicationType,
                                                                   setCommunicationType,
-                                                                  setMessageType
+                                                                  setProtoRoot
                                                                 }) => {
   const [serverUrl, setServerUrl] = useState<string>('');
   const [protoFile, setProtoFile] = useState<File | null>(null);
@@ -84,9 +84,10 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
       reader.onload = async (e) => {
         if (e.target && typeof e.target.result === 'string') {
           try {
-            const root = await protobuf.parse(e.target.result).root;
-            const messageType = root.lookupType("YourMessageType"); // Update this to match your proto definition
-            setMessageType(messageType);
+            console.log('Parsing proto file...');
+            const root = protobuf.parse(e.target.result).root;
+            console.log('Proto file parsed. Root:', root);
+            setProtoRoot(root);
           } catch (error) {
             console.error('Error parsing proto file:', error);
           }
@@ -97,14 +98,14 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   };
 
   return (
-      <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
             label="Server URL"
             value={serverUrl}
             onChange={(e) => setServerUrl(e.target.value)}
             fullWidth
         />
-        <Box sx={{display: 'flex', justifyContent: 'space-between'}}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button variant="contained" onClick={connectToServer} disabled={connected || !serverUrl}>
             Connect
           </Button>
@@ -126,13 +127,12 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
             <TextField
                 type="file"
                 onChange={handleProtoFileUpload}
-                inputProps={{accept: '.proto'}}
+                inputProps={{ accept: '.proto' }}
                 fullWidth
             />
         )}
-        {protoFile &&
-            <Chip label={`Uploaded: ${protoFile.name}`} onDelete={() => setProtoFile(null)}/>}
-        {connectionError && <Chip label={connectionError} color="error"/>}
+        {protoFile && <Chip label={`Uploaded: ${protoFile.name}`} onDelete={() => setProtoFile(null)} />}
+        {connectionError && <Chip label={connectionError} color="error" />}
       </Box>
   );
 };

@@ -7,6 +7,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
 import { Client } from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
 
@@ -35,6 +36,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   const [protoFiles, setProtoFiles] = useState<File[]>([]);
   const [protoLoadError, setProtoLoadError] = useState<string | null>(null);
   const [loadedProtoFiles, setLoadedProtoFiles] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const connectToServer = async () => {
     if (clientRef.current) {
@@ -77,58 +79,77 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
     }
   };
 
+  const fetchProtoFile = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+    }
+    return response.text();
+  };
+
+  const extractImports = (content: string): string[] => {
+    const importRegex = /import\s+"([^"]+)"/g;
+    const imports = [];
+    let match;
+    while ((match = importRegex.exec(content)) !== null) {
+      imports.push(match[1]);
+    }
+    return imports;
+  };
+
   const handleProtoFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
+      setIsLoading(true);
       const newFiles = Array.from(event.target.files);
       setProtoFiles(prev => [...prev, ...newFiles]);
 
       try {
         const root = new protobuf.Root();
-
-        // 외부 Proto 파일 캐시
+        const loadedFiles = new Set<string>();
         const externalProtoCache: { [key: string]: string } = {};
 
-        // 외부 Proto 파일 미리 로드
-        const dependencies = ['google/protobuf/timestamp.proto', 'google/protobuf/wrappers.proto'];
-        await Promise.all(dependencies.map(async (dep) => {
-          try {
-            const url = `https://raw.githubusercontent.com/protocolbuffers/protobuf/master/src/${dep}`;
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+        const loadProtoFile = async (file: File | string): Promise<void> => {
+          let content: string;
+          let filename: string;
+
+          if (typeof file === 'string') {
+            filename = file;
+            if (loadedFiles.has(filename)) return;
+
+            if (externalProtoCache[filename]) {
+              content = externalProtoCache[filename];
+            } else {
+              content = await fetchProtoFile(`https://raw.githubusercontent.com/protocolbuffers/protobuf/master/src/${filename}`);
+              externalProtoCache[filename] = content;
             }
-            externalProtoCache[dep] = await response.text();
-            console.log(`Pre-loaded dependency: ${dep}`);
-          } catch (error) {
-            console.error(`Failed to pre-load dependency ${dep}:`, error);
+          } else {
+            filename = file.name;
+            if (loadedFiles.has(filename)) return;
+            content = await readFileContent(file);
           }
-        }));
 
-        // 외부 의존성 파일들을 먼저 로드
-        for (const [filename, content] of Object.entries(externalProtoCache)) {
+          loadedFiles.add(filename);
+
+          const imports = extractImports(content);
+          await Promise.all(imports.map(loadProtoFile));
+
           const parsed = protobuf.parse(content);
           root.add(parsed.root);
-          console.log(`Loaded dependency: ${filename}`);
-        }
+          setLoadedProtoFiles(prev => new Set(prev).add(filename));
+          console.log(`Loaded file: ${filename}`);
+        };
 
-        // 사용자가 업로드한 파일들을 로드
-        for (const file of [...protoFiles, ...newFiles]) {
-          const content = await readFileContent(file);
-          const parsed = protobuf.parse(content);
-          root.add(parsed.root);
-          setLoadedProtoFiles(prev => new Set(prev).add(file.name));
-          console.log(`Loaded file: ${file.name}`);
-        }
+        await Promise.all([...protoFiles, ...newFiles].map(loadProtoFile));
 
-        // 모든 의존성 해결
         root.resolveAll();
-
         console.log('All proto files parsed successfully. Root:', root);
         setProtoRoot(root);
         setProtoLoadError(null);
       } catch (error) {
         console.error('Error parsing proto files:', error);
         setProtoLoadError(`Error parsing proto files: ${error}`);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -180,6 +201,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                 onChange={handleProtoFileUpload}
                 inputProps={{ accept: '.proto', multiple: true }}
                 fullWidth
+                disabled={isLoading}
             />
         )}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -191,6 +213,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
               />
           ))}
         </Box>
+        {isLoading && <CircularProgress />}
         {connectionError && <Chip label={connectionError} color="error" />}
         {protoLoadError && <Chip label={protoLoadError} color="error" />}
       </Box>

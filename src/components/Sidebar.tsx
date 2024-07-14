@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
-import Paper from '@mui/material/Paper';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+import {
+  Paper, Box, IconButton, Typography, Divider,
+  Tabs, Tab, Switch, Tooltip
+} from '@mui/material';
+import {
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Brightness4 as Brightness4Icon,
+  Brightness7 as Brightness7Icon,
+} from '@mui/icons-material';
+import { Client } from '@stomp/stompjs';
 import { ConnectionPanel } from './ConnectionPanel';
 import { SubscriptionPanel } from './SubscriptionPanel';
 import { MessageInput } from './MessageInput';
-import { Client } from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
 import { MessageItem } from './WebSocketClient';
 import { ResizableBox, ResizeCallbackData } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 
 interface SidebarProps {
-  isDarkMode: boolean;
-  setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
+  mode: 'light' | 'dark';
+  toggleColorMode: () => void;
   isSidebarOpen: boolean;
   setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
   connected: boolean;
@@ -28,11 +31,25 @@ interface SidebarProps {
   communicationType: 'protobuf' | 'string';
   setCommunicationType: React.Dispatch<React.SetStateAction<'protobuf' | 'string'>>;
   setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>;
+  serverUrl: string;
+  setServerUrl: React.Dispatch<React.SetStateAction<string>>;
+  protoFiles: File[];
+  setProtoFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  protoRoot: protobuf.Root | null;
+  setProtoRoot: React.Dispatch<React.SetStateAction<protobuf.Root | null>>;
+  subscribeChannels: string[];
+  setSubscribeChannels: React.Dispatch<React.SetStateAction<string[]>>;
+  messageInput: string;
+  setMessageInput: React.Dispatch<React.SetStateAction<string>>;
+  publishChannel: string;
+  setPublishChannel: React.Dispatch<React.SetStateAction<string>>;
+  loadedProtoFiles: Set<string>;
+  setLoadedProtoFiles: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-                                                  isDarkMode,
-                                                  setIsDarkMode,
+                                                  mode,
+                                                  toggleColorMode,
                                                   isSidebarOpen,
                                                   setIsSidebarOpen,
                                                   connected,
@@ -42,23 +59,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                   clientRef,
                                                   communicationType,
                                                   setCommunicationType,
-                                                  setMessages
+                                                  setMessages,
+                                                  serverUrl,
+                                                  setServerUrl,
+                                                  protoFiles,
+                                                  setProtoFiles,
+                                                  protoRoot,
+                                                  setProtoRoot,
+                                                  subscribeChannels,
+                                                  setSubscribeChannels,
+                                                  messageInput,
+                                                  setMessageInput,
+                                                  publishChannel,
+                                                  setPublishChannel,
+                                                  loadedProtoFiles,
+                                                  setLoadedProtoFiles
                                                 }) => {
-  const [protoRoot, setProtoRoot] = useState<protobuf.Root | null>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(400); // 초기 너비
+  const [activeTab, setActiveTab] = useState<number>(0);
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const [sidebarWidth, setSidebarWidth] = useState(600);
 
   const handleResize = (event: React.SyntheticEvent, { size }: ResizeCallbackData) => {
     setSidebarWidth(size.width);
+  };
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
   };
 
   return (
       <ResizableBox
           width={isSidebarOpen ? sidebarWidth : 60}
           height={Infinity}
-          minConstraints={[300, Infinity]}
-          maxConstraints={[600, Infinity]}
+          minConstraints={[200, Infinity]}
+          maxConstraints={[500, Infinity]}
           axis="x"
           onResize={handleResize}
           handle={<div className="react-resizable-handle react-resizable-handle-e" />}
@@ -77,56 +113,91 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <Box sx={{
             display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            p: isSidebarOpen ? 2 : 1
+            alignItems: 'center',
+            justifyContent: isSidebarOpen ? 'space-between' : 'center',
+            p: 1,
           }}>
-            <IconButton
-                onClick={toggleSidebar}
-                sx={{ alignSelf: isSidebarOpen ? 'flex-end' : 'center', mb: 2 }}
-            >
+            {isSidebarOpen && (
+                <Typography variant="h6" sx={{ pl: 2 }}>
+                  WebSocket Client
+                </Typography>
+            )}
+            <IconButton onClick={toggleSidebar}>
               {isSidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </IconButton>
-            {isSidebarOpen && (
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2,
-                  overflowY: 'auto',
-                  flexGrow: 1
-                }}>
-                  <h1>WebSocket Client</h1>
-                  <ConnectionPanel
-                      connected={connected}
-                      setConnected={setConnected}
-                      connectionError={connectionError}
-                      setConnectionError={setConnectionError}
-                      clientRef={clientRef}
-                      communicationType={communicationType}
-                      setCommunicationType={setCommunicationType}
-                      setProtoRoot={setProtoRoot}
-                  />
-                  <SubscriptionPanel
-                      connected={connected}
-                      clientRef={clientRef}
-                      setMessages={setMessages}
-                  />
-                  <MessageInput
-                      connected={connected}
-                      clientRef={clientRef}
-                      communicationType={communicationType}
-                      setMessages={setMessages}
-                      protoRoot={protoRoot}
-                  />
+          </Box>
+          <Divider />
+          {isSidebarOpen && (
+              <>
+                <Tabs
+                    value={activeTab}
+                    onChange={handleTabChange}
+                    variant="fullWidth"
+                    sx={{ borderBottom: 1, borderColor: 'divider' }}
+                >
+                  <Tab label="Connection" />
+                  <Tab label="Subscription" />
+                  <Tab label="Send Message" />
+                </Tabs>
+                <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
+                  {activeTab === 0 && (
+                      <ConnectionPanel
+                          connected={connected}
+                          setConnected={setConnected}
+                          connectionError={connectionError}
+                          setConnectionError={setConnectionError}
+                          clientRef={clientRef}
+                          communicationType={communicationType}
+                          setCommunicationType={setCommunicationType}
+                          serverUrl={serverUrl}
+                          setServerUrl={setServerUrl}
+                          protoFiles={protoFiles}
+                          setProtoFiles={setProtoFiles}
+                          protoRoot={protoRoot}
+                          setProtoRoot={setProtoRoot}
+                          loadedProtoFiles={loadedProtoFiles}
+                          setLoadedProtoFiles={setLoadedProtoFiles}
+                      />
+                  )}
+                  {activeTab === 1 && (
+                      <SubscriptionPanel
+                          connected={connected}
+                          clientRef={clientRef}
+                          setMessages={setMessages}
+                          subscribeChannels={subscribeChannels}
+                          setSubscribeChannels={setSubscribeChannels}
+                      />
+                  )}
+                  {activeTab === 2 && (
+                      <MessageInput
+                          connected={connected}
+                          clientRef={clientRef}
+                          communicationType={communicationType}
+                          setMessages={setMessages}
+                          protoRoot={protoRoot}
+                          messageInput={messageInput}
+                          setMessageInput={setMessageInput}
+                          publishChannel={publishChannel}
+                          setPublishChannel={setPublishChannel}
+                      />
+                  )}
                 </Box>
+              </>
+          )}
+          <Divider />
+          <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Tooltip title="Toggle dark mode">
+              <IconButton onClick={toggleColorMode} color="inherit">
+                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+              </IconButton>
+            </Tooltip>
+            {isSidebarOpen && (
+                <Switch
+                    checked={communicationType === 'protobuf'}
+                    onChange={() => setCommunicationType(prev => prev === 'string' ? 'protobuf' : 'string')}
+                    inputProps={{ 'aria-label': 'communication type' }}
+                />
             )}
-            <IconButton
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                color="inherit"
-                sx={{ mt: 'auto', alignSelf: isSidebarOpen ? 'flex-start' : 'center' }}
-            >
-              {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
           </Box>
         </Paper>
       </ResizableBox>

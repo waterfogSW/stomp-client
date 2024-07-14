@@ -19,7 +19,14 @@ interface ConnectionPanelProps {
   clientRef: React.MutableRefObject<Client | null>;
   communicationType: 'protobuf' | 'string';
   setCommunicationType: React.Dispatch<React.SetStateAction<'protobuf' | 'string'>>;
+  serverUrl: string;
+  setServerUrl: React.Dispatch<React.SetStateAction<string>>;
+  protoFiles: File[];
+  setProtoFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  protoRoot: protobuf.Root | null;
   setProtoRoot: React.Dispatch<React.SetStateAction<protobuf.Root | null>>;
+  loadedProtoFiles: Set<string>;
+  setLoadedProtoFiles: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
@@ -30,13 +37,17 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                   clientRef,
                                                                   communicationType,
                                                                   setCommunicationType,
-                                                                  setProtoRoot
+                                                                  serverUrl,
+                                                                  setServerUrl,
+                                                                  protoFiles,
+                                                                  setProtoFiles,
+                                                                  protoRoot,
+                                                                  setProtoRoot,
+                                                                  loadedProtoFiles,
+                                                                  setLoadedProtoFiles
                                                                 }) => {
-  const [serverUrl, setServerUrl] = useState<string>('');
-  const [protoFiles, setProtoFiles] = useState<File[]>([]);
-  const [protoLoadError, setProtoLoadError] = useState<string | null>(null);
-  const [loadedProtoFiles, setLoadedProtoFiles] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [protoLoadError, setProtoLoadError] = useState<string | null>(null);
 
   const connectToServer = async () => {
     if (clientRef.current) {
@@ -105,7 +116,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
 
       try {
         const root = new protobuf.Root();
-        const loadedFiles = new Set<string>();
+        const newLoadedFiles = new Set(loadedProtoFiles);
         const externalProtoCache: { [key: string]: string } = {};
 
         const loadProtoFile = async (file: File | string): Promise<void> => {
@@ -114,7 +125,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
 
           if (typeof file === 'string') {
             filename = file;
-            if (loadedFiles.has(filename)) return;
+            if (newLoadedFiles.has(filename)) return;
 
             if (externalProtoCache[filename]) {
               content = externalProtoCache[filename];
@@ -124,18 +135,17 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
             }
           } else {
             filename = file.name;
-            if (loadedFiles.has(filename)) return;
+            if (newLoadedFiles.has(filename)) return;
             content = await readFileContent(file);
           }
 
-          loadedFiles.add(filename);
+          newLoadedFiles.add(filename);
 
           const imports = extractImports(content);
           await Promise.all(imports.map(loadProtoFile));
 
           const parsed = protobuf.parse(content);
           root.add(parsed.root);
-          setLoadedProtoFiles(prev => new Set(prev).add(filename));
           console.log(`Loaded file: ${filename}`);
         };
 
@@ -144,6 +154,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
         root.resolveAll();
         console.log('All proto files parsed successfully. Root:', root);
         setProtoRoot(root);
+        setLoadedProtoFiles(newLoadedFiles);
         setProtoLoadError(null);
       } catch (error) {
         console.error('Error parsing proto files:', error);

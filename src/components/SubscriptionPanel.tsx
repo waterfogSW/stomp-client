@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, { useRef } from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -8,22 +8,25 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {Client, IMessage, StompSubscription} from '@stomp/stompjs';
-import {MessageItem} from './WebSocketClient';
+import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
+import { MessageItem } from './WebSocketClient';
 
 interface SubscriptionPanelProps {
     connected: boolean;
     clientRef: React.MutableRefObject<Client | null>;
     setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>;
+    subscribeChannels: string[];
+    setSubscribeChannels: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
                                                                         connected,
                                                                         clientRef,
-                                                                        setMessages
+                                                                        setMessages,
+                                                                        subscribeChannels,
+                                                                        setSubscribeChannels
                                                                     }) => {
-    const [subscribeChannels, setSubscribeChannels] = useState<string[]>([]);
-    const [newSubscribeChannel, setNewSubscribeChannel] = useState<string>('');
+    const [newSubscribeChannel, setNewSubscribeChannel] = React.useState<string>('');
     const subscriptionsRef = useRef<Map<string, StompSubscription>>(new Map());
 
     const addSubscribeChannel = () => {
@@ -53,12 +56,12 @@ export const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
     };
 
     const handleIncomingMessage = (messageBody: string) => {
-        setMessages(prev => [...prev, {type: 'received', content: messageBody, timestamp: new Date()}]);
+        setMessages(prev => [...prev, { type: 'received', content: messageBody, timestamp: new Date() }]);
     };
 
     return (
-        <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
-            <Box sx={{display: 'flex', gap: 1}}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                     label="Subscribe Channel"
                     value={newSubscribeChannel}
@@ -72,11 +75,10 @@ export const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
             <List>
                 {subscribeChannels.map((channel, index) => (
                     <ListItem key={index}>
-                        <ListItemText primary={channel}/>
+                        <ListItemText primary={channel} />
                         <ListItemSecondaryAction>
-                            <IconButton edge="end" aria-label="delete"
-                                        onClick={() => removeSubscribeChannel(channel)}>
-                                <DeleteIcon/>
+                            <IconButton edge="end" aria-label="delete" onClick={() => removeSubscribeChannel(channel)}>
+                                <DeleteIcon />
                             </IconButton>
                         </ListItemSecondaryAction>
                     </ListItem>

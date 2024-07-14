@@ -17,9 +17,14 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import { MessageItem } from './WebSocketClient';
 import { formatDistanceToNow } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
+
+interface MessageItem {
+  type: 'sent' | 'received';
+  content: string;
+  timestamp: Date;
+}
 
 interface MessageRowProps {
   msg: MessageItem;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -22,6 +22,10 @@ interface MessageInputProps {
   communicationType: 'protobuf' | 'string';
   setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>;
   protoRoot: protobuf.Root | null;
+  messageInput: string;
+  setMessageInput: React.Dispatch<React.SetStateAction<string>>;
+  publishChannel: string;
+  setPublishChannel: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -30,9 +34,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                                             communicationType,
                                                             setMessages,
                                                             protoRoot,
+                                                            messageInput,
+                                                            setMessageInput,
+                                                            publishChannel,
+                                                            setPublishChannel
                                                           }) => {
-  const [messageInput, setMessageInput] = useState<string>('');
-  const [publishChannel, setPublishChannel] = useState<string>('/app/sendMessage');
   const [error, setError] = useState<string | null>(null);
   const [protoTypes, setProtoTypes] = useState<string[]>([]);
 

@@ -1,21 +1,31 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
-  Paper, Box, IconButton, Typography, Divider,
-  Tabs, Tab, Switch, Tooltip
+  Badge,
+  Box,
+  Divider,
+  IconButton,
+  Paper,
+  Switch,
+  Tab,
+  Tabs,
+  Tooltip,
+  Typography
 } from '@mui/material';
 import {
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
   Brightness4 as Brightness4Icon,
   Brightness7 as Brightness7Icon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  SignalWifi4Bar as SignalWifi4BarIcon,
+  SignalWifiOff as SignalWifiOffIcon,
 } from '@mui/icons-material';
-import { Client } from '@stomp/stompjs';
-import { ConnectionPanel } from './ConnectionPanel';
-import { SubscriptionPanel } from './SubscriptionPanel';
-import { MessageInput } from './MessageInput';
+import {Client} from '@stomp/stompjs';
+import {ConnectionPanel} from './ConnectionPanel';
+import {SubscriptionPanel} from './SubscriptionPanel';
+import {MessageInput} from './MessageInput';
 import * as protobuf from 'protobufjs';
-import { MessageItem } from './WebSocketClient';
-import { ResizableBox, ResizeCallbackData } from 'react-resizable';
+import {MessageItem} from './WebSocketClient';
+import {ResizableBox, ResizeCallbackData} from 'react-resizable';
 import 'react-resizable/css/styles.css';
 
 interface SidebarProps {
@@ -76,10 +86,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                   setLoadedProtoFiles
                                                 }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
-
   const [sidebarWidth, setSidebarWidth] = useState(600);
 
-  const handleResize = (event: React.SyntheticEvent, { size }: ResizeCallbackData) => {
+  const handleResize = (event: React.SyntheticEvent, {size}: ResizeCallbackData) => {
     setSidebarWidth(size.width);
   };
 
@@ -97,7 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           maxConstraints={[500, Infinity]}
           axis="x"
           onResize={handleResize}
-          handle={<div className="react-resizable-handle react-resizable-handle-e" />}
+          handle={<div className="react-resizable-handle react-resizable-handle-e"/>}
       >
         <Paper
             elevation={3}
@@ -118,28 +127,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
             p: 1,
           }}>
             {isSidebarOpen && (
-                <Typography variant="h6" sx={{ pl: 2 }}>
-                  WebSocket Client
+                <Typography variant="h6" sx={{pl: 2}}>
+                  STOMP Client
                 </Typography>
             )}
             <IconButton onClick={toggleSidebar}>
-              {isSidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+              {isSidebarOpen ? <ChevronLeftIcon/> : <ChevronRightIcon/>}
             </IconButton>
           </Box>
-          <Divider />
+          <Divider/>
           {isSidebarOpen && (
               <>
                 <Tabs
                     value={activeTab}
                     onChange={handleTabChange}
                     variant="fullWidth"
-                    sx={{ borderBottom: 1, borderColor: 'divider' }}
+                    sx={{borderBottom: 1, borderColor: 'divider'}}
                 >
-                  <Tab label="Connection" />
-                  <Tab label="Subscription" />
-                  <Tab label="Send Message" />
+                  <Tab
+                      label="Connection"
+                      icon={
+                        <Badge color={connected ? "success" : "error"} variant="dot">
+                          {connected ? <SignalWifi4BarIcon/> : <SignalWifiOffIcon/>}
+                        </Badge>
+                      }
+                      iconPosition="end"
+                  />
+                  <Tab
+                      label="Subscription "
+                      icon={
+                        <Badge
+                            badgeContent={subscribeChannels.length}
+                            color="primary"
+                            sx={{
+                              '& .MuiBadge-badge': {
+                                right: -5,
+                              },
+                            }}
+                        ></Badge>
+                      }
+                      iconPosition="end"
+                  />
+                  <Tab label="Send Message"/>
                 </Tabs>
-                <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
+                <Box sx={{flexGrow: 1, overflowY: 'auto', p: 2}}>
                   {activeTab === 0 && (
                       <ConnectionPanel
                           connected={connected}
@@ -184,18 +215,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </Box>
               </>
           )}
-          <Divider />
-          <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Divider/>
+          <Box sx={{p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
             <Tooltip title="Toggle dark mode">
               <IconButton onClick={toggleColorMode} color="inherit">
-                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                {mode === 'dark' ? <Brightness7Icon/> : <Brightness4Icon/>}
               </IconButton>
             </Tooltip>
             {isSidebarOpen && (
                 <Switch
                     checked={communicationType === 'protobuf'}
                     onChange={() => setCommunicationType(prev => prev === 'string' ? 'protobuf' : 'string')}
-                    inputProps={{ 'aria-label': 'communication type' }}
+                    inputProps={{'aria-label': 'communication type'}}
                 />
             )}
           </Box>

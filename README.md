@@ -2,6 +2,8 @@
 
 A feature-rich STOMP (Simple Text Oriented Messaging Protocol) client application built with Next.js and Material-UI, supporting both string and Protocol Buffers message formats.
 
+![img.png](img.png)
+
 ## Features
 
 - Real-time communication using STOMP over WebSocket

@@ -14,10 +14,12 @@
     "@mui/icons-material": "^5.16.0",
     "@mui/material": "^5.16.0",
     "@stomp/stompjs": "^7.0.0",
+    "ace-builds": "^1.35.2",
     "file-saver": "^2.0.5",
     "next": "14.2.4",
     "protobufjs": "^7.3.2",
     "react": "^18",
+    "react-ace": "^12.0.0",
     "react-dom": "^18",
     "shadcn-ui": "^0.8.0",
     "styled-components": "^6.1.11"

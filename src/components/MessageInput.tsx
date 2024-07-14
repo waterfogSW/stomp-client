@@ -5,6 +5,10 @@ import Box from '@mui/material/Box';
 import { Client } from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
 import Typography from '@mui/material/Typography';
+import AceEditor from 'react-ace';
+
+import 'ace-builds/src-noconflict/mode-json';
+import 'ace-builds/src-noconflict/theme-github';
 
 interface MessageItem {
   type: 'sent' | 'received';
@@ -102,16 +106,26 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onChange={(e) => setPublishChannel(e.target.value)}
             fullWidth
         />
-        <TextField
-            label="Message"
-            multiline
-            rows={4}
+        <AceEditor
+            mode="json"
+            theme="github"
+            onChange={setMessageInput}
+            name="message-editor"
+            editorProps={{ $blockScrolling: true }}
+            setOptions={{
+              useWorker: false,
+              showLineNumbers: true,
+              tabSize: 2,
+            }}
             value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            fullWidth
-            error={!!error}
-            helperText={error || "Enter JSON message with the message type as the root key"}
+            width="100%"
+            height="200px"
+            style={{ border: error ? '1px solid red' : '1px solid #ccc' }}
         />
+        {error && <Typography color="error">{error}</Typography>}
+        <Typography variant="caption">
+          Enter JSON message with the message type as the root key
+        </Typography>
         <Button
             variant="contained"
             onClick={sendMessage}

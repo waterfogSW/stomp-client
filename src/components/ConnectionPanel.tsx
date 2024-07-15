@@ -41,7 +41,6 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                   setServerUrl,
                                                                   protoFiles,
                                                                   setProtoFiles,
-                                                                  protoRoot,
                                                                   setProtoRoot,
                                                                   loadedProtoFiles,
                                                                   setLoadedProtoFiles

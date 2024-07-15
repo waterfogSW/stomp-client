@@ -88,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [activeTab, setActiveTab] = useState<number>(0);
   const [sidebarWidth, setSidebarWidth] = useState(600);
 
-  const handleResize = (event: React.SyntheticEvent, {size}: ResizeCallbackData) => {
+  const handleResize = (_event: React.SyntheticEvent, {size}: ResizeCallbackData) => {
     setSidebarWidth(size.width);
   };
 

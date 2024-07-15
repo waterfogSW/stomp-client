@@ -31,7 +31,7 @@ interface MessageRowProps {
   index: number;
 }
 
-const MessageRow: React.FC<MessageRowProps> = ({ msg, index }) => {
+const MessageRow: React.FC<MessageRowProps> = ({ msg}) => {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
 

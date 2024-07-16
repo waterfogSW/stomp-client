@@ -8,6 +8,9 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { Client } from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
 
@@ -29,6 +32,11 @@ interface ConnectionPanelProps {
   setLoadedProtoFiles: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
+interface Header {
+  key: string;
+  value: string;
+}
+
 export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                   connected,
                                                                   setConnected,
@@ -47,14 +55,23 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [protoLoadError, setProtoLoadError] = useState<string | null>(null);
+  const [headers, setHeaders] = useState<Header[]>([{ key: '', value: '' }]);
 
   const connectToServer = async () => {
     if (clientRef.current) {
       await clientRef.current.deactivate();
     }
 
+    const connectHeaders = headers.reduce((acc, header) => {
+      if (header.key && header.value) {
+        acc[header.key] = header.value;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+
     const client = new Client({
       brokerURL: serverUrl,
+      connectHeaders,
       onConnect: () => {
         console.log('Connected to STOMP server');
         setConnected(true);
@@ -87,6 +104,20 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
         setConnectionError('Error disconnecting from server');
       }
     }
+  };
+
+  const handleAddHeader = () => {
+    setHeaders([...headers, { key: '', value: '' }]);
+  };
+
+  const handleRemoveHeader = (index: number) => {
+    setHeaders(headers.filter((_, i) => i !== index));
+  };
+
+  const handleHeaderChange = (index: number, field: 'key' | 'value', value: string) => {
+    const newHeaders = [...headers];
+    newHeaders[index][field] = value;
+    setHeaders(newHeaders);
   };
 
   const fetchProtoFile = async (url: string): Promise<string> => {
@@ -186,7 +217,32 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
             value={serverUrl}
             onChange={(e) => setServerUrl(e.target.value)}
             fullWidth
+            disabled={connected}
         />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {headers.map((header, index) => (
+              <Box key={index} sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                    label="Header Key"
+                    value={header.key}
+                    onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
+                    disabled={connected}
+                />
+                <TextField
+                    label="Header Value"
+                    value={header.value}
+                    onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
+                    disabled={connected}
+                />
+                <IconButton onClick={() => handleRemoveHeader(index)} disabled={connected}>
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+          ))}
+          <Button startIcon={<AddIcon />} onClick={handleAddHeader} disabled={connected}>
+            Add Header
+          </Button>
+        </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button variant="contained" onClick={connectToServer} disabled={connected || !serverUrl}>
             Connect
@@ -211,16 +267,11 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                 onChange={handleProtoFileUpload}
                 inputProps={{ accept: '.proto', multiple: true }}
                 fullWidth
-                disabled={isLoading}
             />
         )}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {Array.from(loadedProtoFiles).map((file) => (
-              <Chip
-                  key={file}
-                  label={file}
-                  color="secondary"
-              />
+              <Chip key={file} label={file} color="secondary" />
           ))}
         </Box>
         {isLoading && <CircularProgress />}

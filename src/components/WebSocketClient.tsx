@@ -11,7 +11,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import * as protobuf from 'protobufjs';
 
 export interface MessageItem {
-  type: 'sent' | 'received';
+  type: 'SENT' | 'RECEIVED';
   content: string;
   timestamp: Date;
 }

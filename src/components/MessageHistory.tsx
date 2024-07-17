@@ -17,11 +17,11 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { useTheme } from '@mui/material/styles';
 
 interface MessageItem {
-  type: 'sent' | 'received';
+  type: 'SENT' | 'RECEIVED';
   content: string;
   timestamp: Date;
 }
@@ -31,7 +31,7 @@ interface MessageRowProps {
   index: number;
 }
 
-const MessageRow: React.FC<MessageRowProps> = ({ msg}) => {
+const MessageRow: React.FC<MessageRowProps> = ({ msg }) => {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
 
@@ -41,14 +41,14 @@ const MessageRow: React.FC<MessageRowProps> = ({ msg}) => {
     return content.substring(0, maxLength) + '...';
   };
 
-  const formattedTime = useMemo(() => formatDistanceToNow(msg.timestamp, { addSuffix: true }), [msg.timestamp]);
+  const formattedTime = useMemo(() => format(msg.timestamp, 'yyyy-MM-dd HH:mm:ss'), [msg.timestamp]);
 
   return (
       <>
         <TableRow
             sx={{
               '& > *': { borderBottom: 'unset' },
-              backgroundColor: msg.type === 'sent' ? theme.palette.action.hover : 'inherit'
+              backgroundColor: msg.type === 'SENT' ? theme.palette.action.hover : 'inherit'
             }}
         >
           <TableCell>
@@ -63,7 +63,7 @@ const MessageRow: React.FC<MessageRowProps> = ({ msg}) => {
           <TableCell>
             <Chip
                 label={msg.type}
-                color={msg.type === 'sent' ? 'primary' : 'secondary'}
+                color={msg.type === 'SENT' ? 'primary' : 'secondary'}
                 size="small"
                 sx={{ fontWeight: 'bold' }}
             />
@@ -107,6 +107,7 @@ type SortOrder = 'latest' | 'oldest';
 
 export const MessageHistory: React.FC<MessageHistoryProps> = ({ messages }) => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('latest');
+  const theme = useTheme();
 
   const sortedMessages = useMemo(() => {
     return [...messages].sort((a, b) => {
@@ -123,8 +124,19 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({ messages }) => {
   };
 
   return (
-      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2, overflow: 'hidden' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden'
+      }}>
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 2,
+          borderBottom: `1px solid ${theme.palette.divider}`
+        }}>
           <Typography variant="h4" component="h2">
             History
           </Typography>
@@ -141,7 +153,7 @@ export const MessageHistory: React.FC<MessageHistoryProps> = ({ messages }) => {
             </Select>
           </FormControl>
         </Box>
-        <TableContainer component={Paper} sx={{ flexGrow: 1, overflow: 'auto', mb: 2 }}>
+        <TableContainer component={Paper} sx={{ flexGrow: 1, overflow: 'auto' }}>
           <Table stickyHeader aria-label="message history table">
             <TableHead>
               <TableRow>

@@ -56,7 +56,7 @@ export const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
     };
 
     const handleIncomingMessage = (messageBody: string) => {
-        setMessages(prev => [...prev, { type: 'received', content: messageBody, timestamp: new Date() }]);
+        setMessages(prev => [...prev, { type: 'RECEIVED', content: messageBody, timestamp: new Date() }]);
     };
 
     return (

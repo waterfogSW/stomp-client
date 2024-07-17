@@ -11,7 +11,7 @@ import 'ace-builds/src-noconflict/mode-json';
 import 'ace-builds/src-noconflict/theme-github';
 
 interface MessageItem {
-  type: 'sent' | 'received';
+  type: 'SENT' | 'RECEIVED';
   content: string;
   timestamp: Date;
 }
@@ -93,7 +93,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         body: typeof messageBody === 'string' ? messageBody : undefined,
       });
 
-      setMessages(prev => [...prev, { type: 'sent', content: messageInput, timestamp: new Date() }]);
+      setMessages(prev => [...prev, { type: 'SENT', content: messageInput, timestamp: new Date() }]);
       setMessageInput('');
       setError(null);
     } catch (error) {

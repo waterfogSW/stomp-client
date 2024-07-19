@@ -197,6 +197,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           setMessages={setMessages}
                           subscribeChannels={subscribeChannels}
                           setSubscribeChannels={setSubscribeChannels}
+                          communicationType={communicationType}
+                          protoRoot={protoRoot}
                       />
                   )}
                   {activeTab === 2 && (

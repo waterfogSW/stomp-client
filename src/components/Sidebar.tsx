@@ -1,19 +1,6 @@
 import React, {useState} from 'react';
+import {Badge, Box, Divider, IconButton, Paper, Switch, Tab, Tabs, Typography} from '@mui/material';
 import {
-  Badge,
-  Box,
-  Divider,
-  IconButton,
-  Paper,
-  Switch,
-  Tab,
-  Tabs,
-  Tooltip,
-  Typography
-} from '@mui/material';
-import {
-  Brightness4 as Brightness4Icon,
-  Brightness7 as Brightness7Icon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   SignalWifi4Bar as SignalWifi4BarIcon,
@@ -58,8 +45,6 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-                                                  mode,
-                                                  toggleColorMode,
                                                   isSidebarOpen,
                                                   setIsSidebarOpen,
                                                   connected,
@@ -219,11 +204,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
           <Divider/>
           <Box sx={{p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <Tooltip title="Toggle dark mode">
-              <IconButton onClick={toggleColorMode} color="inherit">
-                {mode === 'dark' ? <Brightness7Icon/> : <Brightness4Icon/>}
-              </IconButton>
-            </Tooltip>
             {isSidebarOpen && (
                 <Switch
                     checked={communicationType === 'protobuf'}

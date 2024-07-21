@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -11,7 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Client } from '@stomp/stompjs';
+import {Client} from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
 
 interface ConnectionPanelProps {
@@ -55,9 +55,10 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [protoLoadError, setProtoLoadError] = useState<string | null>(null);
-  const [headers, setHeaders] = useState<Header[]>([{ key: '', value: '' }]);
+  const [headers, setHeaders] = useState<Header[]>([{key: '', value: ''}]);
 
   const connectToServer = async () => {
+    setIsLoading(true);
     if (clientRef.current) {
       await clientRef.current.deactivate();
     }
@@ -76,15 +77,18 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
         console.log('Connected to STOMP server');
         setConnected(true);
         setConnectionError(null);
+        setIsLoading(false);
       },
       onDisconnect: () => {
         console.log('Disconnected from STOMP server');
         setConnected(false);
+        setIsLoading(false);
       },
       onStompError: (frame) => {
         console.error('STOMP error', frame);
         setConnectionError(`STOMP error: ${frame.headers.message}`);
         setConnected(false);
+        setIsLoading(false);
       },
     });
 
@@ -93,6 +97,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   };
 
   const disconnectFromServer = async () => {
+    setIsLoading(true);
     const client = clientRef.current;
     if (client) {
       try {
@@ -102,12 +107,14 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
       } catch (error) {
         console.error('Error disconnecting:', error);
         setConnectionError('Error disconnecting from server');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
 
   const handleAddHeader = () => {
-    setHeaders([...headers, { key: '', value: '' }]);
+    setHeaders([...headers, {key: '', value: ''}]);
   };
 
   const handleRemoveHeader = (index: number) => {
@@ -211,43 +218,52 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   };
 
   return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
         <TextField
             label="Server URL"
             value={serverUrl}
             onChange={(e) => setServerUrl(e.target.value)}
             fullWidth
-            disabled={connected}
+            disabled={connected || isLoading}
         />
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>
           {headers.map((header, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 1 }}>
+              <Box key={index} sx={{display: 'flex', gap: 1}}>
                 <TextField
                     label="Header Key"
                     value={header.key}
                     onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
-                    disabled={connected}
+                    disabled={connected || isLoading}
                 />
                 <TextField
                     label="Header Value"
                     value={header.value}
                     onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
-                    disabled={connected}
+                    disabled={connected || isLoading}
                 />
-                <IconButton onClick={() => handleRemoveHeader(index)} disabled={connected}>
-                  <DeleteIcon />
+                <IconButton onClick={() => handleRemoveHeader(index)}
+                            disabled={connected || isLoading}>
+                  <DeleteIcon/>
                 </IconButton>
               </Box>
           ))}
-          <Button startIcon={<AddIcon />} onClick={handleAddHeader} disabled={connected}>
-            Add Header
-          </Button>
+          <Button startIcon={<AddIcon/>} onClick={handleAddHeader}
+                  disabled={connected || isLoading}>
+            Add Header </Button>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button variant="contained" onClick={connectToServer} disabled={connected || !serverUrl}>
+        <Box sx={{display: 'flex', justifyContent: 'space-between'}}>
+          <Button
+              variant="contained"
+              onClick={connectToServer}
+              disabled={connected || !serverUrl || isLoading}
+          >
             Connect
           </Button>
-          <Button variant="contained" onClick={disconnectFromServer} disabled={!connected}>
+          <Button
+              variant="contained"
+              onClick={disconnectFromServer}
+              disabled={!connected || isLoading}
+          >
             Disconnect
           </Button>
         </Box>
@@ -256,27 +272,36 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
           <Select
               value={communicationType}
               onChange={(e) => setCommunicationType(e.target.value as 'protobuf' | 'string')}
+              disabled={isLoading}
           >
             <MenuItem value="string">String</MenuItem>
             <MenuItem value="protobuf">Protobuf</MenuItem>
           </Select>
         </FormControl>
         {communicationType === 'protobuf' && (
-            <TextField
-                type="file"
-                onChange={handleProtoFileUpload}
-                inputProps={{ accept: '.proto', multiple: true }}
-                fullWidth
-            />
+            <Button
+                variant="contained"
+                component="label"
+                disabled={isLoading}
+            >
+              Proto file upload
+              <input
+                  type="file"
+                  hidden
+                  onChange={handleProtoFileUpload}
+                  accept=".proto"
+                  multiple
+              />
+            </Button>
         )}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1}}>
           {Array.from(loadedProtoFiles).map((file) => (
-              <Chip key={file} label={file} color="secondary" />
+              <Chip key={file} label={file} color="secondary"/>
           ))}
         </Box>
-        {isLoading && <CircularProgress />}
-        {connectionError && <Chip label={connectionError} color="error" />}
-        {protoLoadError && <Chip label={protoLoadError} color="error" />}
+        {isLoading && <CircularProgress/>}
+        {connectionError && <Chip label={connectionError} color="error"/>}
+        {protoLoadError && <Chip label={protoLoadError} color="error"/>}
       </Box>
   );
 };

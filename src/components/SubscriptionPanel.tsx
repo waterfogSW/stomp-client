@@ -20,6 +20,7 @@ interface SubscriptionPanelProps {
   setSubscribeChannels: React.Dispatch<React.SetStateAction<string[]>>;
   communicationType: 'protobuf' | 'string';
   protoRoot: protobuf.Root | null;
+  subscriptionsRef: React.MutableRefObject<Map<string, StompSubscription>>;
 }
 
 export const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
@@ -29,10 +30,10 @@ export const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({
                                                                       subscribeChannels,
                                                                       setSubscribeChannels,
                                                                       communicationType,
-                                                                      protoRoot
+                                                                      protoRoot,
+                                                                      subscriptionsRef
                                                                     }) => {
   const [newSubscribeChannel, setNewSubscribeChannel] = useState<string>('');
-  const subscriptionsRef = useRef<Map<string, StompSubscription>>(new Map());
 
   useEffect(() => {
     if (protoRoot) {

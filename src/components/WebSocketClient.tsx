@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useMemo } from 'react';
-import { Client } from '@stomp/stompjs';
+import {Client, StompSubscription} from '@stomp/stompjs';
 import { ThemeProvider, createTheme, ThemeOptions } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
@@ -104,6 +104,10 @@ export const WebSocketClient: React.FC = () => {
   const [messageInput, setMessageInput] = useState<string>('');
   const [publishChannel, setPublishChannel] = useState<string>('/app/sendMessage');
 
+  const [subscriptionsRef] = useState<React.MutableRefObject<Map<string, StompSubscription>>>(
+      React.useRef(new Map())
+  );
+
   const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
   const muiTheme = useTheme();
 
@@ -191,6 +195,7 @@ export const WebSocketClient: React.FC = () => {
                   setPublishChannel={setPublishChannel}
                   loadedProtoFiles={loadedProtoFiles}
                   setLoadedProtoFiles={setLoadedProtoFiles}
+                  subscriptionsRef={subscriptionsRef}
               />
             </Box>
             <Box sx={{

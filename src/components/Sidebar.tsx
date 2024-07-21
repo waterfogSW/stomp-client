@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Client } from '@stomp/stompjs';
+import {Client, StompSubscription} from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
 import {
   Box,
@@ -42,6 +42,7 @@ interface SidebarProps {
   setPublishChannel: React.Dispatch<React.SetStateAction<string>>;
   loadedProtoFiles: Set<string>;
   setLoadedProtoFiles: React.Dispatch<React.SetStateAction<Set<string>>>;
+  subscriptionsRef: React.MutableRefObject<Map<string, StompSubscription>>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -69,7 +70,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                   publishChannel,
                                                   setPublishChannel,
                                                   loadedProtoFiles,
-                                                  setLoadedProtoFiles
+                                                  setLoadedProtoFiles,
+                                                  subscriptionsRef,
                                                 }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const theme = useTheme();
@@ -130,6 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         setSubscribeChannels={setSubscribeChannels}
                         communicationType={communicationType}
                         protoRoot={protoRoot}
+                        subscriptionsRef={subscriptionsRef}
                     />
                 )}
                 {activeTab === 2 && (

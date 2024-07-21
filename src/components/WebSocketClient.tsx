@@ -9,7 +9,7 @@ import { Sidebar } from './Sidebar';
 import { MessageHistory } from './MessageHistory';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import * as protobuf from 'protobufjs';
-import { AppBar, Toolbar, Typography, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, useTheme } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
@@ -26,13 +26,13 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     ...(mode === 'light'
         ? {
           primary: {
-            main: '#1976d2',
+            main: '#2196f3',
           },
           secondary: {
             main: '#f50057',
           },
           background: {
-            default: '#f5f5f5',
+            default: '#f4f6f8',
             paper: '#ffffff',
           },
         }
@@ -41,16 +41,16 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
             main: '#90caf9',
           },
           secondary: {
-            main: '#ff4081',
+            main: '#f48fb1',
           },
           background: {
-            default: '#303030',
-            paper: '#424242',
+            default: '#121212',
+            paper: '#1e1e1e',
           },
         }),
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 8,
   },
   components: {
     MuiButton: {
@@ -58,7 +58,7 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
         root: {
           textTransform: 'none',
           fontWeight: 'bold',
-        } as const,
+        },
       },
     },
     MuiPaper: {
@@ -66,7 +66,7 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
         root: {
           backgroundImage: 'none',
           boxShadow: mode === 'dark' ? '0 4px 6px rgba(0,0,0,0.3)' : '0 4px 6px rgba(0,0,0,0.1)',
-        } as const,
+        },
       },
     },
     MuiAppBar: {
@@ -74,7 +74,7 @@ const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
         root: {
           boxShadow: 'none',
           borderBottom: `1px solid ${mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
-        } as const,
+        },
       },
     },
   },
@@ -105,6 +105,7 @@ export const WebSocketClient: React.FC = () => {
   const [publishChannel, setPublishChannel] = useState<string>('/app/sendMessage');
 
   const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+  const muiTheme = useTheme();
 
   const toggleColorMode = () => {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
@@ -126,7 +127,7 @@ export const WebSocketClient: React.FC = () => {
           color: 'text.primary',
           transition: 'background-color 0.3s, color 0.3s',
         }}>
-          <AppBar position="static" color="default">
+          <AppBar position="static" color="default" elevation={0}>
             <Toolbar>
               <IconButton
                   edge="start"
@@ -137,7 +138,7 @@ export const WebSocketClient: React.FC = () => {
               >
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
                 WebSocket Client
               </Typography>
               <IconButton color="inherit" onClick={toggleColorMode}>
@@ -150,35 +151,58 @@ export const WebSocketClient: React.FC = () => {
             flexGrow: 1,
             overflow: 'hidden',
           }}>
-            <Sidebar
-                mode={mode}
-                toggleColorMode={toggleColorMode}
-                isSidebarOpen={isSidebarOpen}
-                setIsSidebarOpen={setIsSidebarOpen}
-                connected={connected}
-                setConnected={setConnected}
-                connectionError={connectionError}
-                setConnectionError={setConnectionError}
-                clientRef={clientRef}
-                communicationType={communicationType}
-                setCommunicationType={setCommunicationType}
-                setMessages={setMessages}
-                serverUrl={serverUrl}
-                setServerUrl={setServerUrl}
-                protoFiles={protoFiles}
-                setProtoFiles={setProtoFiles}
-                protoRoot={protoRoot}
-                setProtoRoot={setProtoRoot}
-                subscribeChannels={subscribeChannels}
-                setSubscribeChannels={setSubscribeChannels}
-                messageInput={messageInput}
-                setMessageInput={setMessageInput}
-                publishChannel={publishChannel}
-                setPublishChannel={setPublishChannel}
-                loadedProtoFiles={loadedProtoFiles}
-                setLoadedProtoFiles={setLoadedProtoFiles}
-            />
-            <Box sx={{ flexGrow: 1, overflow: 'hidden', p: 2 }}>
+            <Box
+                sx={{
+                  width: isSidebarOpen ? 500 : 0,
+                  flexShrink: 0,
+                  transition: muiTheme.transitions.create('width', {
+                    easing: muiTheme.transitions.easing.sharp,
+                    duration: muiTheme.transitions.duration.leavingScreen,
+                  }),
+                  overflow: 'hidden',
+                  bgcolor: 'background.paper',
+                  borderRight: `1px solid ${muiTheme.palette.divider}`,
+                }}
+            >
+              <Sidebar
+                  mode={mode}
+                  toggleColorMode={toggleColorMode}
+                  isSidebarOpen={isSidebarOpen}
+                  setIsSidebarOpen={setIsSidebarOpen}
+                  connected={connected}
+                  setConnected={setConnected}
+                  connectionError={connectionError}
+                  setConnectionError={setConnectionError}
+                  clientRef={clientRef}
+                  communicationType={communicationType}
+                  setCommunicationType={setCommunicationType}
+                  setMessages={setMessages}
+                  serverUrl={serverUrl}
+                  setServerUrl={setServerUrl}
+                  protoFiles={protoFiles}
+                  setProtoFiles={setProtoFiles}
+                  protoRoot={protoRoot}
+                  setProtoRoot={setProtoRoot}
+                  subscribeChannels={subscribeChannels}
+                  setSubscribeChannels={setSubscribeChannels}
+                  messageInput={messageInput}
+                  setMessageInput={setMessageInput}
+                  publishChannel={publishChannel}
+                  setPublishChannel={setPublishChannel}
+                  loadedProtoFiles={loadedProtoFiles}
+                  setLoadedProtoFiles={setLoadedProtoFiles}
+              />
+            </Box>
+            <Box sx={{
+              flexGrow: 1,
+              p: 3,
+              transition: muiTheme.transitions.create('margin', {
+                easing: muiTheme.transitions.easing.sharp,
+                duration: muiTheme.transitions.duration.leavingScreen,
+              }),
+              marginLeft: 0,
+              overflow: 'auto',
+            }}>
               <MessageHistory messages={messages} />
             </Box>
           </Box>

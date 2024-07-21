@@ -1,18 +1,26 @@
-import React, {useState} from 'react';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
-import IconButton from '@mui/material/IconButton';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import {Client} from '@stomp/stompjs';
+import React, { useState } from 'react';
+import { Client } from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
+import {
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Chip,
+  IconButton,
+  Paper,
+  Collapse,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  CircularProgress,
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  ExpandMore as ExpandMoreIcon,
+} from '@mui/icons-material';
 
 interface ConnectionPanelProps {
   connected: boolean;
@@ -55,7 +63,8 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [protoLoadError, setProtoLoadError] = useState<string | null>(null);
-  const [headers, setHeaders] = useState<Header[]>([{key: '', value: ''}]);
+  const [headers, setHeaders] = useState<Header[]>([{ key: '', value: '' }]);
+  const [showHeaders, setShowHeaders] = useState<boolean>(false);
 
   const connectToServer = async () => {
     setIsLoading(true);
@@ -114,7 +123,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   };
 
   const handleAddHeader = () => {
-    setHeaders([...headers, {key: '', value: ''}]);
+    setHeaders([...headers, { key: '', value: '' }]);
   };
 
   const handleRemoveHeader = (index: number) => {
@@ -218,73 +227,96 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   };
 
   return (
-      <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
             label="Server URL"
             value={serverUrl}
             onChange={(e) => setServerUrl(e.target.value)}
             fullWidth
+            variant="outlined"
             disabled={connected || isLoading}
         />
-        <Box sx={{display: 'flex', flexDirection: 'column', gap: 1}}>
-          {headers.map((header, index) => (
-              <Box key={index} sx={{display: 'flex', gap: 1}}>
-                <TextField
-                    label="Header Key"
-                    value={header.key}
-                    onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
-                    disabled={connected || isLoading}
-                />
-                <TextField
-                    label="Header Value"
-                    value={header.value}
-                    onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
-                    disabled={connected || isLoading}
-                />
-                <IconButton onClick={() => handleRemoveHeader(index)}
-                            disabled={connected || isLoading}>
-                  <DeleteIcon/>
-                </IconButton>
-              </Box>
-          ))}
-          <Button startIcon={<AddIcon/>} onClick={handleAddHeader}
-                  disabled={connected || isLoading}>
-            Add Header </Button>
-        </Box>
-        <Box sx={{display: 'flex', justifyContent: 'space-between'}}>
+
+        <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1">Headers</Typography>
+            <IconButton size="small" onClick={() => setShowHeaders(!showHeaders)}>
+              <ExpandMoreIcon sx={{ transform: showHeaders ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+            </IconButton>
+          </Box>
+          <Collapse in={showHeaders}>
+            <List dense>
+              {headers.map((header, index) => (
+                  <ListItem key={index} disableGutters>
+                    <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <TextField
+                                label="Key"
+                                value={header.key}
+                                onChange={(e) => handleHeaderChange(index, 'key', e.target.value)}
+                                disabled={connected || isLoading}
+                                size="small"
+                                fullWidth
+                            />
+                            <TextField
+                                label="Value"
+                                value={header.value}
+                                onChange={(e) => handleHeaderChange(index, 'value', e.target.value)}
+                                disabled={connected || isLoading}
+                                size="small"
+                                fullWidth
+                            />
+                          </Box>
+                        }
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton edge="end" onClick={() => handleRemoveHeader(index)} disabled={connected || isLoading}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+              ))}
+            </List>
+            <Button
+                startIcon={<AddIcon />}
+                onClick={handleAddHeader}
+                disabled={connected || isLoading}
+                fullWidth
+                sx={{ mt: 1 }}
+            >
+              Add Header
+            </Button>
+          </Collapse>
+        </Paper>
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
               variant="contained"
               onClick={connectToServer}
               disabled={connected || !serverUrl || isLoading}
+              fullWidth
           >
-            Connect
+            {isLoading ? <CircularProgress size={24} /> : 'Connect'}
           </Button>
           <Button
-              variant="contained"
+              variant="outlined"
               onClick={disconnectFromServer}
               disabled={!connected || isLoading}
+              fullWidth
           >
             Disconnect
           </Button>
         </Box>
-        <FormControl fullWidth>
-          <InputLabel>Communication Type</InputLabel>
-          <Select
-              value={communicationType}
-              onChange={(e) => setCommunicationType(e.target.value as 'protobuf' | 'string')}
-              disabled={isLoading}
-          >
-            <MenuItem value="string">String</MenuItem>
-            <MenuItem value="protobuf">Protobuf</MenuItem>
-          </Select>
-        </FormControl>
+
         {communicationType === 'protobuf' && (
             <Button
-                variant="contained"
+                variant="outlined"
                 component="label"
                 disabled={isLoading}
+                fullWidth
             >
-              Proto file upload
+              Upload Proto File
               <input
                   type="file"
                   hidden
@@ -294,14 +326,23 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
               />
             </Button>
         )}
-        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1}}>
+
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {Array.from(loadedProtoFiles).map((file) => (
-              <Chip key={file} label={file} color="secondary"/>
+              <Chip key={file} label={file} onDelete={() => {/* Add delete logic */}} />
           ))}
         </Box>
-        {isLoading && <CircularProgress/>}
-        {connectionError && <Chip label={connectionError} color="error"/>}
-        {protoLoadError && <Chip label={protoLoadError} color="error"/>}
+
+        {connectionError && (
+            <Typography color="error" variant="body2">
+              {connectionError}
+            </Typography>
+        )}
+        {protoLoadError && (
+            <Typography color="error" variant="body2">
+              {protoLoadError}
+            </Typography>
+        )}
       </Box>
   );
 };

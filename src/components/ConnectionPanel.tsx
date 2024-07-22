@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { Client } from '@stomp/stompjs';
+import React, {useState} from 'react';
+import {Client} from '@stomp/stompjs';
 import * as protobuf from 'protobufjs';
 import {
-  TextField,
-  Button,
   Box,
-  Typography,
+  Button,
   Chip,
-  IconButton,
-  Paper,
+  CircularProgress,
   Collapse,
+  IconButton,
   List,
   ListItem,
-  ListItemText,
   ListItemSecondaryAction,
-  CircularProgress,
+  ListItemText,
+  Paper,
+  TextField,
+  Typography,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -63,7 +63,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [protoLoadError, setProtoLoadError] = useState<string | null>(null);
-  const [headers, setHeaders] = useState<Header[]>([{ key: '', value: '' }]);
+  const [headers, setHeaders] = useState<Header[]>([{key: '', value: ''}]);
   const [showHeaders, setShowHeaders] = useState<boolean>(false);
 
   const connectToServer = async () => {
@@ -123,7 +123,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   };
 
   const handleAddHeader = () => {
-    setHeaders([...headers, { key: '', value: '' }]);
+    setHeaders([...headers, {key: '', value: ''}]);
   };
 
   const handleRemoveHeader = (index: number) => {
@@ -227,7 +227,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   };
 
   return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
         <TextField
             label="Server URL"
             value={serverUrl}
@@ -237,11 +237,11 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
             disabled={connected || isLoading}
         />
 
-        <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Paper elevation={0} sx={{p: 2, bgcolor: 'background.default'}}>
+          <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1}}>
             <Typography variant="subtitle1">Headers</Typography>
             <IconButton size="small" onClick={() => setShowHeaders(!showHeaders)}>
-              <ExpandMoreIcon sx={{ transform: showHeaders ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+              <ExpandMoreIcon sx={{transform: showHeaders ? 'rotate(180deg)' : 'rotate(0deg)'}}/>
             </IconButton>
           </Box>
           <Collapse in={showHeaders}>
@@ -250,7 +250,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                   <ListItem key={index} disableGutters>
                     <ListItemText
                         primary={
-                          <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Box sx={{display: 'flex', gap: 1}}>
                             <TextField
                                 label="Key"
                                 value={header.key}
@@ -271,33 +271,34 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                         }
                     />
                     <ListItemSecondaryAction>
-                      <IconButton edge="end" onClick={() => handleRemoveHeader(index)} disabled={connected || isLoading}>
-                        <DeleteIcon />
+                      <IconButton edge="end" onClick={() => handleRemoveHeader(index)}
+                                  disabled={connected || isLoading}>
+                        <DeleteIcon/>
                       </IconButton>
                     </ListItemSecondaryAction>
                   </ListItem>
               ))}
             </List>
             <Button
-                startIcon={<AddIcon />}
+                startIcon={<AddIcon/>}
                 onClick={handleAddHeader}
                 disabled={connected || isLoading}
                 fullWidth
-                sx={{ mt: 1 }}
+                sx={{mt: 1}}
             >
               Add Header
             </Button>
           </Collapse>
         </Paper>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{display: 'flex', gap: 2}}>
           <Button
               variant="contained"
               onClick={connectToServer}
               disabled={connected || !serverUrl || isLoading}
               fullWidth
           >
-            {isLoading ? <CircularProgress size={24} /> : 'Connect'}
+            {isLoading ? <CircularProgress size={24}/> : 'Connect'}
           </Button>
           <Button
               variant="outlined"
@@ -327,9 +328,10 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
             </Button>
         )}
 
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1}}>
           {Array.from(loadedProtoFiles).map((file) => (
-              <Chip key={file} label={file} onDelete={() => {/* Add delete logic */}} />
+              <Chip key={file} label={file} onDelete={() => {/* Add delete logic */
+              }}/>
           ))}
         </Box>
 

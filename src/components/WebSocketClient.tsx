@@ -20,6 +20,11 @@ export interface MessageItem {
   timestamp: Date;
 }
 
+export interface Header {
+  key: string;
+  value: string;
+}
+
 const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
   palette: {
     mode,
@@ -103,6 +108,7 @@ export const WebSocketClient: React.FC = () => {
   const [subscribeChannels, setSubscribeChannels] = useState<string[]>([]);
   const [messageInput, setMessageInput] = useState<string>('');
   const [publishChannel, setPublishChannel] = useState<string>('/app/sendMessage');
+  const [headers, setHeaders] = useState<Header[]>([{ key: '', value: '' }]);
 
   const [subscriptionsRef] = useState<React.MutableRefObject<Map<string, StompSubscription>>>(
       React.useRef(new Map())
@@ -196,6 +202,8 @@ export const WebSocketClient: React.FC = () => {
                   loadedProtoFiles={loadedProtoFiles}
                   setLoadedProtoFiles={setLoadedProtoFiles}
                   subscriptionsRef={subscriptionsRef}
+                  headers={headers}
+                  setHeaders={setHeaders}
               />
             </Box>
             <Box sx={{

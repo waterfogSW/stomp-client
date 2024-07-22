@@ -13,7 +13,7 @@ import {
 import { ConnectionPanel } from './ConnectionPanel';
 import { SubscriptionPanel } from './SubscriptionPanel';
 import { MessageInput } from './MessageInput';
-import {MessageItem} from "@/components/WebSocketClient";
+import {Header, MessageItem} from "@/components/WebSocketClient";
 
 interface SidebarProps {
   mode: 'light' | 'dark';
@@ -43,6 +43,8 @@ interface SidebarProps {
   loadedProtoFiles: Set<string>;
   setLoadedProtoFiles: React.Dispatch<React.SetStateAction<Set<string>>>;
   subscriptionsRef: React.MutableRefObject<Map<string, StompSubscription>>;
+  headers: Header[];
+  setHeaders: React.Dispatch<React.SetStateAction<Header[]>>;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -72,6 +74,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                   loadedProtoFiles,
                                                   setLoadedProtoFiles,
                                                   subscriptionsRef,
+                                                  headers,
+                                                  setHeaders,
                                                 }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const theme = useTheme();

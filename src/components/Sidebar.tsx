@@ -125,6 +125,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         setProtoRoot={setProtoRoot}
                         loadedProtoFiles={loadedProtoFiles}
                         setLoadedProtoFiles={setLoadedProtoFiles}
+                        headers={headers}
+                        setHeaders={setHeaders}
                     />
                 )}
                 {activeTab === 1 && (

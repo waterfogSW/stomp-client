@@ -59,6 +59,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
                                                                   setServerUrl,
                                                                   protoFiles,
                                                                   setProtoFiles,
+                                                                  protoRoot,
                                                                   setProtoRoot,
                                                                   loadedProtoFiles,
                                                                   setLoadedProtoFiles,
@@ -164,7 +165,7 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
       setProtoFiles(prev => [...prev, ...newFiles]);
 
       try {
-        const root = new protobuf.Root();
+        const root = protoRoot || new protobuf.Root();
         const newLoadedFiles = new Set(loadedProtoFiles);
         const externalProtoCache: { [key: string]: string } = {};
 
@@ -178,9 +179,11 @@ export const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
 
             if (externalProtoCache[filename]) {
               content = externalProtoCache[filename];
-            } else {
+            } else if (filename.startsWith('google/protobuf/')) {
               content = await fetchProtoFile(`https://raw.githubusercontent.com/protocolbuffers/protobuf/master/src/${filename}`);
               externalProtoCache[filename] = content;
+            } else {
+              return;
             }
           } else {
             filename = file.name;
